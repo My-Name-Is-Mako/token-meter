@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
-import type { Live, Measure, Totals } from '../types'
+import type { Hint, Live, Measure, Totals } from '../types'
 
 const live = atom({ plugin: 'token-meter', key: 'live' } as const, { isActive: false, out: 0 } as Live)
 const totals = atom(
@@ -12,6 +12,23 @@ const measure = atom(
   { plugin: 'token-meter', key: 'measure' } as const,
   { tokens: null, window: 0, percent: null, limits: [], usd: null } as Measure,
 )
+
+const hint = atom({ plugin: 'token-meter', key: 'hint' } as const, { level: 0, text: '' } as Hint)
+
+// Elk bericht stuurt de hele chat opnieuw mee: hoe voller de context, hoe meer tokens
+// en hoe trager elk volgend bericht. Daarom deze tips op vaste drempels.
+function hintFor(percent: number): Hint {
+  if (percent >= 85) {
+    return { level: 3, text: 'Context bijna vol (' + Math.round(percent) + '%): start een nieuwe chat. Vraag eerst om een korte samenvatting om mee te nemen, of gebruik /compact.' }
+  }
+  if (percent >= 70) {
+    return { level: 2, text: 'Context ' + Math.round(percent) + '% vol: /compact vat de chat samen en scheelt tokens per bericht.' }
+  }
+  if (percent >= 50) {
+    return { level: 1, text: 'Context ' + Math.round(percent) + '% vol: houd berichten kort en plak geen grote bestanden meer in deze chat.' }
+  }
+  return { level: 0, text: '' }
+}
 
 const fmt = (n: number): string =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(2)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(Math.round(n))
@@ -39,6 +56,12 @@ export const register: Register = on => {
   })
 
   on('session.measure', async ($, e, next) => {
+    const nextHint = hintFor(e.context.percent ?? 0)
+    const prev = await read($, hint)
+    if (nextHint.level !== prev.level) {
+      await update($, hint, () => nextHint)
+      if (nextHint.level > prev.level) $.ui.toast(nextHint.text, { timeoutMs: 12000 })
+    }
     await update($, measure, () => ({
       tokens: e.context.tokens ?? null,
       window: e.context.window,
@@ -102,12 +125,14 @@ export const register: Register = on => {
     const l = await read($, live)
     const t = await read($, totals)
     const m = await read($, measure)
+    const h = await read($, hint)
 
     const left = m.tokens !== null && m.window > 0 ? Math.max(0, m.window - m.tokens) : null
     const five = m.limits.find(r => r.kind === 'five_hour') ?? m.limits[0]
 
     return (
-      <Box>
+      <Box flexDirection="column">
+        <Box>
         {l.isActive ? <Text color="yellow">⚡ ~{fmt(l.out)} out (live)  │  </Text> : null}
         <Text dimColor>
           sessie: {fmt(t.input + t.cacheRead + t.cacheWrite)} in · {fmt(t.output)} out
@@ -123,6 +148,8 @@ export const register: Register = on => {
           </Text>
         ) : null}
         {m.usd !== null ? <Text dimColor>{'  │  '}${m.usd.toFixed(2)}</Text> : null}
+        </Box>
+        {h.level > 0 ? <Text color={h.level >= 3 ? 'red' : 'yellow'}>💡 {h.text}</Text> : null}
       </Box>
     )
   })
