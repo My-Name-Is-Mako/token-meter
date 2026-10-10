@@ -1,5 +1,6 @@
 export type Live = { isActive: boolean; out: number }
 export type Totals = { input: number; output: number; cacheRead: number; cacheWrite: number; steps: number }
+export type Hint = { level: number; text: string }
 export type Measure = {
   tokens: number | null
   window: number
@@ -10,6 +11,6 @@ export type Measure = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'token-meter': { live: Live; totals: Totals; measure: Measure }
+    'token-meter': { live: Live; totals: Totals; measure: Measure; hint: Hint }
   }
 }
