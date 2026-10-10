@@ -1,1 +1,1 @@
-{"name":"token-meter","version":"0.1.0","description":"Live tokenteller boven de prompt: tokens tijdens het genereren, sessietotaal, resterende context en limiet.","types":"./types/index.d.ts"}
+{ "name": "token-meter", "version": "0.1.1", "description": "Live tokenteller boven de prompt: tokens tijdens het genereren, sessietotaal, resterende context en limiet.", "types": "./types/index.d.ts" }
