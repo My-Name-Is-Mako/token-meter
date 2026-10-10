@@ -33,8 +33,8 @@ function hintFor(percent: number): Hint {
 const fmt = (n: number): string =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(2)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(Math.round(n))
 
-// ruwe schatting zolang de API nog geen echte telling geeft: ~3.5 tekens per token
-const estimate = (chars: number): number => Math.ceil(chars / 3.5)
+// ruwe schatting zolang de API nog geen echte telling geeft: ~4 tekens per token (Nederlands)
+const estimate = (chars: number): number => Math.ceil(chars / 4)
 
 async function refresh($: any): Promise<void> {
   const u = await $.session.usage()
