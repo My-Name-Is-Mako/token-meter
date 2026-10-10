@@ -1,0 +1,1 @@
+{"name":"token-meter","owner":{"name":"Damian"},"plugins":[{"name":"token-meter","source":"./","description":"Live tokenteller boven de prompt: tokens tijdens het genereren, sessietotaal, resterende context en limiet."}]}
